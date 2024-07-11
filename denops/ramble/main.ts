@@ -1,10 +1,10 @@
-import type { Denops } from "./deps/denops_std/mod.ts";
-import * as autocmd from "./deps/denops_std/autocmd/mod.ts";
-import * as helper from "./deps/denops_std/helper/mod.ts";
-import { assertNumber, assertString } from "./deps/unknownutil/mod.ts";
-import { assertProvider, configFilePath, getProvider, parse } from "./utils.ts";
+import type { Entrypoint } from "./deps/@denops/std/mod.ts";
+import * as helper from "./deps/@denops/std/helper/mod.ts";
+import { assert, is } from "./deps/@core/unknownutil/mod.ts";
+import * as config from "./config.ts";
+import * as chat from "./chat.ts";
 
-export async function main(denops: Denops) {
+export const main: Entrypoint = (denops) => {
   const bufload = async (bufnr: number) => {
     if (await denops.call("bufexists", bufnr)) {
       await denops.call("bufload", bufnr);
@@ -13,81 +13,79 @@ export async function main(denops: Denops) {
     }
   };
 
-  const getContent = async (bufnr: number) => {
-    await bufload(bufnr);
-
-    const body = (await denops.call("getbufline", bufnr, 0, "$") as string[])
-      .join("\n");
-    const content = parse(body);
-
-    return content;
-  };
-
   denops.dispatcher = {
+    /**
+     * 設定ファイルを開く。
+     */
     config: async () => {
-      return configFilePath;
+      await denops.cmd(`edit ${config.path()}`);
     },
 
-    open: async (bufnr, providerName) => {
-      assertNumber(bufnr);
-      assertProvider(providerName);
+    /**
+     * 新しいチャットバッファを作成する。
+     */
+    new: async (llm, meta?, messages?) => {
+      assert(llm, is.String);
 
-      await bufload(bufnr);
+      if (!is.Undefined(meta)) {
+        assert(meta, chat.isChatContentMeta);
+      }
 
-      const provider = getProvider(providerName);
+      if (is.Undefined(messages)) {
+        messages = [{ role: "system", message: "system message is here..." }, {
+          role: "user",
+          message: "first question is here...",
+        }];
+      }
+      assert(messages, is.ArrayOf(chat.isChatMessage));
 
-      await denops.call("deletebufline", bufnr, 1, "$");
+      await denops.cmd("vertical botright new");
+      await denops.cmd("setlocal ft=markdown");
       await denops.call(
-        "appendbufline",
-        bufnr,
+        "append",
         0,
-        provider.template(),
+        chat.toStringList({ llm, messages, meta }),
       );
-
-      await denops.cmd("$");
     },
 
-    append: async (bufnr, question) => {
-      assertNumber(bufnr);
-      assertString(question);
-
-      await bufload(bufnr);
-
-      const content = await getContent(bufnr);
-      assertProvider(content.meta.provider);
-
-      const provider = getProvider(content.meta.provider);
-
-      await denops.call(
-        "appendbufline",
-        bufnr,
-        "$",
-        ["", ...provider.question(question)],
-      );
-
-      await denops.cmd("$");
-    },
-
+    /**
+     * チャットする。
+     */
     chat: async (bufnr) => {
-      assertNumber(bufnr);
-
-      const content = await getContent(bufnr);
-      assertProvider(content.meta.provider);
+      assert(bufnr, is.Number);
+      await bufload(bufnr);
 
       await helper.echo(denops, "loading...");
 
-      const provider = getProvider(content.meta.provider);
-      const blocks = await provider.chat(content);
+      const body = (await denops.call("getbufline", bufnr, 0, "$") as string[])
+        .join("\n");
+      const chatContent = chat.parse(body);
 
-      await denops.call(
-        "appendbufline",
-        bufnr,
-        "$",
-        blocks.map((block) => provider.format(block)).flat(),
+      const lastAssistantMessage = await chat.chat(
+        chatContent,
+        config.config().openai.apiKey,
       );
+
+      if (!is.Undefined(lastAssistantMessage)) {
+        await denops.call(
+          "appendbufline",
+          bufnr,
+          "$",
+          [
+            "",
+            "assistant",
+            "---",
+            ...lastAssistantMessage.split("\n"),
+            "",
+            "user",
+            "---",
+            "",
+          ],
+        );
+      }
 
       await denops.cmd("$");
       await helper.echo(denops, "");
     },
   };
-}
+};
