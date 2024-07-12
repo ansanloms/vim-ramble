@@ -95,11 +95,11 @@ export const toStringList = (chatContent: ChatContent) => {
   const metaTexts = Object.entries({
     llm: chatContent.llm,
     ...(chatContent.meta || {}),
-  }).map((
-    [k, v],
-  ) => `${k}: ${v}`);
+  }).map(([k, v]) => `${k}: ${v}`);
 
-  const messagesTexts = chatContent.messages.map(messageToStringList).flat();
+  const messagesTexts = chatContent.messages.map((
+    message,
+  ) => [...messageToStringList(message), "", ""]).flat();
 
   return [
     "---",
@@ -115,9 +115,7 @@ export const messageToStringList = (message: ChatMessage) => {
     message.role,
     "---",
     "",
-    ...message.message.split("\n"),
-    "",
-    "",
+    ...message.message.trim().split("\n"),
   ];
 };
 
