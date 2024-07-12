@@ -68,7 +68,7 @@ export const main: Entrypoint = (denops) => {
         chat.parse(bufline.join("\n")),
         config.config().openai.apiKey,
         async (_, currentChunk) => {
-          await denops.cmd(`${bufline.length},$d`);
+          await denops.cmd(`silent ${bufline.length},$d`);
           await denops.call(
             "appendbufline",
             bufnr,
@@ -78,10 +78,20 @@ export const main: Entrypoint = (denops) => {
               message: currentChunk?.content.toString() || "",
             }),
           );
-          await denops.cmd("redraw!");
+          await denops.cmd("$");
+          await denops.redraw();
         },
       );
 
+      await denops.call(
+        "appendbufline",
+        bufnr,
+        "$",
+        chat.messageToStringList({
+          role: "user",
+          message: "",
+        }),
+      );
       await denops.cmd("$");
       await helper.echo(denops, "");
     },
