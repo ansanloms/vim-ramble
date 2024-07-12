@@ -57,32 +57,30 @@ export const main: Entrypoint = (denops) => {
 
       await helper.echo(denops, "loading...");
 
-      const body = (await denops.call("getbufline", bufnr, 0, "$") as string[])
-        .join("\n");
-      const chatContent = chat.parse(body);
+      const bufline = await denops.call(
+        "getbufline",
+        bufnr,
+        0,
+        "$",
+      ) as string[];
 
-      const lastAssistantMessage = await chat.chat(
-        chatContent,
+      await chat.chat(
+        chat.parse(bufline.join("\n")),
         config.config().openai.apiKey,
+        async (_, currentChunk) => {
+          await denops.cmd(`${bufline.length},$d`);
+          await denops.call(
+            "appendbufline",
+            bufnr,
+            "$",
+            chat.messageToStringList({
+              role: "assistant",
+              message: currentChunk?.content.toString() || "",
+            }),
+          );
+          await denops.cmd("redraw!");
+        },
       );
-
-      if (!is.Undefined(lastAssistantMessage)) {
-        await denops.call(
-          "appendbufline",
-          bufnr,
-          "$",
-          [
-            "",
-            "assistant",
-            "---",
-            ...lastAssistantMessage.split("\n"),
-            "",
-            "user",
-            "---",
-            "",
-          ],
-        );
-      }
 
       await denops.cmd("$");
       await helper.echo(denops, "");

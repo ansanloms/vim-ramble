@@ -4,9 +4,11 @@ import { is } from "./deps/@core/unknownutil/mod.ts";
 import { ChatOpenAI } from "./deps/@langchain/openai/mod.ts";
 import {
   AIMessage,
+  AIMessageChunk,
   HumanMessage,
   SystemMessage,
 } from "./deps/@langchain/core/messages/mod.ts";
+import { concat } from "./deps/@langchain/core/utils/stream/mod.ts";
 
 type ChatMessage = {
   /**
@@ -97,10 +99,7 @@ export const toStringList = (chatContent: ChatContent) => {
     [k, v],
   ) => `${k}: ${v}`);
 
-  const messagesTexts = chatContent.messages.map((
-    message,
-  ) => [message.role, "---", message.message, "", ""])
-    .flat();
+  const messagesTexts = chatContent.messages.map(messageToStringList).flat();
 
   return [
     "---",
@@ -111,7 +110,25 @@ export const toStringList = (chatContent: ChatContent) => {
   ];
 };
 
-export const chat = async (chatContent: ChatContent, apiKey: string) => {
+export const messageToStringList = (message: ChatMessage) => {
+  return [
+    message.role,
+    "---",
+    "",
+    ...message.message.split("\n"),
+    "",
+    "",
+  ];
+};
+
+export const chat = async (
+  chatContent: ChatContent,
+  apiKey: string,
+  callback?: (
+    chunk: AIMessageChunk,
+    currentChunk: AIMessageChunk | undefined,
+  ) => Promise<void>,
+) => {
   if (
     chatContent.messages.length <= 0 ||
     chatContent.messages.at(-1)?.role !== "user"
@@ -123,6 +140,7 @@ export const chat = async (chatContent: ChatContent, apiKey: string) => {
     apiKey,
     model: String(chatContent.meta?.model || "gpt-4o"),
     temperature: Number(chatContent.meta?.temperature || 0),
+    streaming: true,
   });
 
   const messages = chatContent.messages.map((message) => {
@@ -137,5 +155,19 @@ export const chat = async (chatContent: ChatContent, apiKey: string) => {
     return new HumanMessage(message.message);
   });
 
-  return (await model.invoke(messages)).content.toString();
+  let currentChunk: AIMessageChunk | undefined;
+  const stream = await model.stream(messages, {
+    stream_options: {
+      include_usage: true,
+    },
+  });
+
+  for await (const chunk of stream) {
+    currentChunk = currentChunk ? concat(currentChunk, chunk) : chunk;
+    if (callback) {
+      await callback(chunk, currentChunk);
+    }
+  }
+
+  return currentChunk?.content.toString();
 };
