@@ -1,18 +1,11 @@
 import type { Entrypoint } from "./deps/@denops/std/mod.ts";
 import * as helper from "./deps/@denops/std/helper/mod.ts";
+import { bufload } from "./deps/@denops/std/function/mod.ts";
 import { assert, is } from "./deps/@core/unknownutil/mod.ts";
 import * as config from "./config.ts";
 import * as chat from "./chat.ts";
 
 export const main: Entrypoint = (denops) => {
-  const bufload = async (bufnr: number) => {
-    if (await denops.call("bufexists", bufnr)) {
-      await denops.call("bufload", bufnr);
-    } else {
-      throw new Error(`Buffer: ${bufnr} does not exists.`);
-    }
-  };
-
   denops.dispatcher = {
     /**
      * 設定ファイルを開く。
