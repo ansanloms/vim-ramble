@@ -99,8 +99,6 @@ export const main: Entrypoint = (denops) => {
             role: "user",
             message: "",
           }),
-          "",
-          "",
         ],
       );
       await denops.cmd("$");
