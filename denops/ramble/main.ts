@@ -46,7 +46,7 @@ export const main: Entrypoint = (denops) => {
      */
     chat: async (bufnr) => {
       assert(bufnr, is.Number);
-      await bufload(bufnr);
+      await bufload(denops, bufnr);
 
       await helper.echo(denops, "loading...");
 
