@@ -1,1 +1,1 @@
-# ramble.vim
+# vim-ramble
