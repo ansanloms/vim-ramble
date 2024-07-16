@@ -8,7 +8,7 @@ const getBaseConfigPath = () => {
     return configDirectory;
   }
 
-  const homeDirectory = dir("config");
+  const homeDirectory = dir("home");
   if (homeDirectory) {
     return path.join(homeDirectory, ".config");
   }
