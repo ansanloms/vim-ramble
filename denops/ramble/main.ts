@@ -25,10 +25,13 @@ export const main: Entrypoint = (denops) => {
       }
 
       if (is.Undefined(messages)) {
-        messages = [{ role: "system", message: "system message is here..." }, {
-          role: "user",
-          message: "first question is here...",
-        }];
+        messages = [
+          { role: "system", message: "system message is here..." },
+          {
+            role: "user",
+            message: "first question is here...",
+          },
+        ];
       }
       assert(messages, is.ArrayOf(chat.isChatMessage));
 
@@ -58,19 +61,9 @@ export const main: Entrypoint = (denops) => {
 
       await helper.echo(denops, "loading...");
 
-      await denops.call(
-        "appendbufline",
-        bufnr,
-        "$",
-        ["", ""],
-      );
+      await denops.call("appendbufline", bufnr, "$", ["", ""]);
 
-      const bufline = await denops.call(
-        "getbufline",
-        bufnr,
-        0,
-        "$",
-      );
+      const bufline = await denops.call("getbufline", bufnr, 0, "$");
       assert(bufline, is.ArrayOf(is.String));
 
       const chatContent = chat.parse(bufline.join("\n"));
@@ -79,63 +72,43 @@ export const main: Entrypoint = (denops) => {
       const winids = await denops.call("win_findbuf", bufnr);
       assert(winids, is.ArrayOf(is.Number));
 
-      await chat.chat(
-        chatContent,
-        config.config(),
-        async (_, currentChunk) => {
-          await Promise.all(winids.map(async (winid) => {
-            await denops.call(
-              "win_execute",
-              winid,
-              `silent ${lastLine},$d`,
-            );
-          }));
-
-          await denops.call(
-            "appendbufline",
-            bufnr,
-            "$",
-            [
-              ...chat.messageToStringList({
-                role: "assistant",
-                message: currentChunk?.content.toString() || "",
-              }),
-              "",
-              "",
-            ],
-          );
-
-          await Promise.all(winids.map(async (winid) => {
-            await denops.call(
-              "win_execute",
-              winid,
-              "$",
-            );
-          }));
-          if (winids.length > 0) {
-            await denops.redraw();
-          }
-        },
-      );
-
-      await denops.call(
-        "appendbufline",
-        bufnr,
-        "$",
-        [
-          ...chat.messageToStringList({
-            role: "user",
-            message: "",
+      await chat.chat(chatContent, config.config(), async (_, currentChunk) => {
+        await Promise.all(
+          winids.map(async (winid) => {
+            await denops.call("win_execute", winid, `silent ${lastLine},$d`);
           }),
-        ],
-      );
-      await Promise.all(winids.map(async (winid) => {
-        await denops.call(
-          "win_execute",
-          winid,
-          "$",
         );
-      }));
+
+        await denops.call("appendbufline", bufnr, "$", [
+          ...chat.messageToStringList({
+            role: "assistant",
+            message: currentChunk?.content.toString() || "",
+          }),
+          "",
+          "",
+        ]);
+
+        await Promise.all(
+          winids.map(async (winid) => {
+            await denops.call("win_execute", winid, "$");
+          }),
+        );
+        if (winids.length > 0) {
+          await denops.redraw();
+        }
+      });
+
+      await denops.call("appendbufline", bufnr, "$", [
+        ...chat.messageToStringList({
+          role: "user",
+          message: "",
+        }),
+      ]);
+      await Promise.all(
+        winids.map(async (winid) => {
+          await denops.call("win_execute", winid, "$");
+        }),
+      );
 
       await helper.echo(denops, "");
     },

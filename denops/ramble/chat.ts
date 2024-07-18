@@ -1,6 +1,6 @@
 import { marked } from "./deps/marked/mod.ts";
 import matter from "./deps/gray-matter/mod.ts";
-import { is } from "./deps/@core/unknownutil/mod.ts";
+import { assert,is } from "./deps/@core/unknownutil/mod.ts";
 import {
   AIMessage,
   AIMessageChunk,
@@ -27,7 +27,7 @@ export type ChatContent = {
   /**
    * LLM.
    */
-  llm: string;
+  llm: "OpenAI" | "GoogleGenerativeAI";
 
   /**
    * messages.
@@ -40,20 +40,21 @@ export type ChatContent = {
   meta?: Record<string, string | number | boolean>;
 };
 
+const isChatContentLlm= is.UnionOf([
+  is.LiteralOf("OpenAI"),
+  is.LiteralOf("GoogleGenerativeAI"),
+]);
+
 export const isChatMessageRole = is.UnionOf([
   is.LiteralOf("system"),
   is.LiteralOf("assistant"),
   is.LiteralOf("user"),
 ]);
 
-const isChatContentMetaData = is.UnionOf([
-  is.Number,
-  is.String,
-  is.Boolean,
-]);
+const isChatContentMetaData = is.UnionOf([is.Number, is.String, is.Boolean]);
 
 export const isChatContentMeta = is.RecordObjectOf<
-  (string | number | boolean),
+  string | number | boolean,
   string
 >(isChatContentMetaData);
 
@@ -64,22 +65,24 @@ export const isChatMessage = is.ObjectOf({
 
 export const parse = (body: string) => {
   const { data: meta, content } = matter(body.trim());
+  const llm = String(meta.llm || "")
+  assert(llm, isChatContentLlm)
 
   const chatContent: ChatContent = {
-    llm: String(meta.llm || ""),
+    llm,
     messages: [],
     meta: Object.fromEntries(
-      Object.entries(meta).filter((
-        item,
-      ): item is [string, number | string | boolean] =>
-        item.at(0) !== "llm" && isChatContentMetaData(item.at(1))
+      Object.entries(meta).filter(
+        (item): item is [string, number | string | boolean] =>
+          item.at(0) !== "llm" && isChatContentMetaData(item.at(1)),
       ),
     ),
   };
 
   for (const token of marked.lexer(content.trim())) {
     if (
-      token.type === "heading" && token.depth === 2 &&
+      token.type === "heading" &&
+      token.depth === 2 &&
       isChatMessageRole(token.text)
     ) {
       chatContent.messages.push({ role: token.text, message: "" });
@@ -98,26 +101,15 @@ export const toStringList = (chatContent: ChatContent) => {
     ...(chatContent.meta || {}),
   }).map(([k, v]) => `${k}: ${v}`);
 
-  const messagesTexts = chatContent.messages.map((
-    message,
-  ) => [...messageToStringList(message), "", ""]).flat();
+  const messagesTexts = chatContent.messages
+    .map((message) => [...messageToStringList(message), "", ""])
+    .flat();
 
-  return [
-    "---",
-    ...metaTexts,
-    "---",
-    "",
-    ...messagesTexts,
-  ];
+  return ["---", ...metaTexts, "---", "", ...messagesTexts];
 };
 
 export const messageToStringList = (message: ChatMessage) => {
-  return [
-    message.role,
-    "---",
-    "",
-    ...message.message.trim().split("\n"),
-  ];
+  return [message.role, "---", "", ...message.message.trim().split("\n")];
 };
 
 export const chat = async (

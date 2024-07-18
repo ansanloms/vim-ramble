@@ -4,19 +4,29 @@ import * as path from "./deps/@std/path/mod.ts";
 import * as fs from "./deps/@std/fs/mod.ts";
 
 type ConfigOpenAI = {
-  "apiKey": string;
+  apiKey: string;
+};
+
+type ConfigGoogleGenerativeAI = {
+  apiKey: string;
 };
 
 export type Config = {
-  "openai"?: ConfigOpenAI;
+  openAI?: ConfigOpenAI;
+  googleGenerativeAI?: ConfigGoogleGenerativeAI;
 };
 
 const isConfigOpenAI = is.ObjectOf({
   apiKey: is.String,
 });
 
+const isConfigGoogleGenerativeAI = is.ObjectOf({
+  apiKey: is.String,
+});
+
 const isConfig = is.ObjectOf({
-  openai: is.OptionalOf(isConfigOpenAI),
+  openAI: is.OptionalOf(isConfigOpenAI),
+  googleGenerativeAI: is.OptionalOf(isConfigGoogleGenerativeAI),
 });
 
 const getBaseConfigPath = () => {
@@ -43,7 +53,7 @@ const getConfigPath = () => {
 const getConfig = (): Config => {
   const configPath = getConfigPath();
 
-  if (!(fs.existsSync(configPath))) {
+  if (!fs.existsSync(configPath)) {
     Deno.mkdirSync(path.dirname(configPath), { recursive: true });
     Deno.writeTextFileSync(
       configPath,
