@@ -12,8 +12,8 @@ type ConfigGoogleGenerativeAI = {
 };
 
 export type Config = {
-  openAI?: ConfigOpenAI;
-  googleGenerativeAI?: ConfigGoogleGenerativeAI;
+  OpenAI?: ConfigOpenAI;
+  GoogleGenerativeAI?: ConfigGoogleGenerativeAI;
 };
 
 const isConfigOpenAI = is.ObjectOf({
@@ -25,8 +25,8 @@ const isConfigGoogleGenerativeAI = is.ObjectOf({
 });
 
 const isConfig = is.ObjectOf({
-  openAI: is.OptionalOf(isConfigOpenAI),
-  googleGenerativeAI: is.OptionalOf(isConfigGoogleGenerativeAI),
+  OpenAI: is.OptionalOf(isConfigOpenAI),
+  GoogleGenerativeAI: is.OptionalOf(isConfigGoogleGenerativeAI),
 });
 
 const getBaseConfigPath = () => {

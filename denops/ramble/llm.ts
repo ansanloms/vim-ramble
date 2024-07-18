@@ -24,7 +24,7 @@ const getOpenAIModel = (
   meta?: Record<string, string | number | boolean>,
 ) => {
   return new ChatOpenAI({
-    apiKey: config.openAI?.apiKey,
+    apiKey: config.OpenAI?.apiKey,
     model: String(meta?.model || "gpt-4o"),
     temperature: Number(meta?.temperature || 0),
     streaming: true,
@@ -36,7 +36,7 @@ const getGoogleGenerativeAIModel = (
   meta?: Record<string, string | number | boolean>,
 ) => {
   return new ChatGoogleGenerativeAI({
-    apiKey: config.googleGenerativeAI?.apiKey,
+    apiKey: config.GoogleGenerativeAI?.apiKey,
     model: String(meta?.model || "gemini-pro"),
     maxOutputTokens: Number(meta?.maxOutputTokens || 2048),
     streaming: true,

@@ -1,6 +1,6 @@
 import { marked } from "./deps/marked/mod.ts";
 import matter from "./deps/gray-matter/mod.ts";
-import { assert,is } from "./deps/@core/unknownutil/mod.ts";
+import { assert, is } from "./deps/@core/unknownutil/mod.ts";
 import {
   AIMessage,
   AIMessageChunk,
@@ -27,7 +27,7 @@ export type ChatContent = {
   /**
    * LLM.
    */
-  llm: "OpenAI" | "GoogleGenerativeAI";
+  llm: keyof Config;
 
   /**
    * messages.
@@ -40,7 +40,7 @@ export type ChatContent = {
   meta?: Record<string, string | number | boolean>;
 };
 
-const isChatContentLlm= is.UnionOf([
+const isChatContentLlm = is.UnionOf([
   is.LiteralOf("OpenAI"),
   is.LiteralOf("GoogleGenerativeAI"),
 ]);
@@ -65,8 +65,8 @@ export const isChatMessage = is.ObjectOf({
 
 export const parse = (body: string) => {
   const { data: meta, content } = matter(body.trim());
-  const llm = String(meta.llm || "")
-  assert(llm, isChatContentLlm)
+  const llm = String(meta.llm || "");
+  assert(llm, isChatContentLlm);
 
   const chatContent: ChatContent = {
     llm,
