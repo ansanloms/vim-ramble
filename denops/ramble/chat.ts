@@ -1,7 +1,6 @@
 import { marked } from "./deps/marked/mod.ts";
 import matter from "./deps/gray-matter/mod.ts";
 import { is } from "./deps/@core/unknownutil/mod.ts";
-import { ChatOpenAI } from "./deps/@langchain/openai/mod.ts";
 import {
   AIMessage,
   AIMessageChunk,
@@ -9,6 +8,8 @@ import {
   SystemMessage,
 } from "./deps/@langchain/core/messages/mod.ts";
 import { concat } from "./deps/@langchain/core/utils/stream/mod.ts";
+import type { Config } from "./config.ts";
+import * as llm from "./llm.ts";
 
 type ChatMessage = {
   /**
@@ -121,7 +122,7 @@ export const messageToStringList = (message: ChatMessage) => {
 
 export const chat = async (
   chatContent: ChatContent,
-  apiKey: string,
+  config: Config,
   callback?: (
     chunk: AIMessageChunk,
     currentChunk: AIMessageChunk | undefined,
@@ -134,12 +135,10 @@ export const chat = async (
     return undefined;
   }
 
-  const model = new ChatOpenAI({
-    apiKey,
-    model: String(chatContent.meta?.model || "gpt-4o"),
-    temperature: Number(chatContent.meta?.temperature || 0),
-    streaming: true,
-  });
+  const model = llm.getModel(chatContent.llm, config, chatContent.meta);
+  if (!model) {
+    return undefined;
+  }
 
   const messages = chatContent.messages.map((message) => {
     if (message.role == "system") {

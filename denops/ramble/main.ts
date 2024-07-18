@@ -81,7 +81,7 @@ export const main: Entrypoint = (denops) => {
 
       await chat.chat(
         chatContent,
-        config.config().openai.apiKey,
+        config.config(),
         async (_, currentChunk) => {
           await Promise.all(winids.map(async (winid) => {
             await denops.call(
