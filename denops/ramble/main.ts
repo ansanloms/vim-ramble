@@ -1,6 +1,6 @@
 import type { Entrypoint } from "./deps/@denops/std/mod.ts";
 import * as helper from "./deps/@denops/std/helper/mod.ts";
-import { bufload } from "./deps/@denops/std/function/mod.ts";
+import { bufadd, bufload } from "./deps/@denops/std/function/mod.ts";
 import { assert, is } from "./deps/@core/unknownutil/mod.ts";
 import * as config from "./config.ts";
 import * as chat from "./chat.ts";
@@ -32,13 +32,21 @@ export const main: Entrypoint = (denops) => {
       }
       assert(messages, is.ArrayOf(chat.isChatMessage));
 
-      await denops.cmd("vertical botright new");
-      await denops.cmd("setlocal ft=markdown");
+      const bufnr = await bufadd(denops, "");
+      await bufload(denops, bufnr);
+
+      await denops.cmd("vsplit | wincmd l | vertical resize 80");
+      await denops.cmd(`buffer ${bufnr}`);
+      await denops.cmd("setlocal filetype=ramble-chat");
+
       await denops.call(
-        "append",
+        "appendbufline",
+        bufnr,
         0,
         chat.toStringList({ llm, messages, meta }),
       );
+
+      return bufnr
     },
 
     /**
@@ -62,7 +70,8 @@ export const main: Entrypoint = (denops) => {
         bufnr,
         0,
         "$",
-      ) as string[];
+      ) ;
+      assert(bufline, is.ArrayOf(is.String));
 
       const chatContent = chat.parse(bufline.join("\n"));
       const lastLine = bufline.length;
@@ -102,6 +111,7 @@ export const main: Entrypoint = (denops) => {
         ],
       );
       await denops.cmd("$");
+
       await helper.echo(denops, "");
     },
   };
