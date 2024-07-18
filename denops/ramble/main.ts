@@ -46,7 +46,7 @@ export const main: Entrypoint = (denops) => {
         chat.toStringList({ llm, messages, meta }),
       );
 
-      return bufnr
+      return bufnr;
     },
 
     /**
@@ -70,17 +70,27 @@ export const main: Entrypoint = (denops) => {
         bufnr,
         0,
         "$",
-      ) ;
+      );
       assert(bufline, is.ArrayOf(is.String));
 
       const chatContent = chat.parse(bufline.join("\n"));
       const lastLine = bufline.length;
 
+      const winids = await denops.call("win_findbuf", bufnr);
+      assert(winids, is.ArrayOf(is.Number));
+
       await chat.chat(
         chatContent,
         config.config().openai.apiKey,
         async (_, currentChunk) => {
-          await denops.cmd(`silent ${lastLine},$d`);
+          await Promise.all(winids.map(async (winid) => {
+            await denops.call(
+              "win_execute",
+              winid,
+              `silent ${lastLine},$d`,
+            );
+          }));
+
           await denops.call(
             "appendbufline",
             bufnr,
@@ -94,8 +104,17 @@ export const main: Entrypoint = (denops) => {
               "",
             ],
           );
-          await denops.cmd("$");
-          await denops.redraw();
+
+          await Promise.all(winids.map(async (winid) => {
+            await denops.call(
+              "win_execute",
+              winid,
+              "$",
+            );
+          }));
+          if (winids.length > 0) {
+            await denops.redraw();
+          }
         },
       );
 
@@ -110,7 +129,13 @@ export const main: Entrypoint = (denops) => {
           }),
         ],
       );
-      await denops.cmd("$");
+      await Promise.all(winids.map(async (winid) => {
+        await denops.call(
+          "win_execute",
+          winid,
+          "$",
+        );
+      }));
 
       await helper.echo(denops, "");
     },
