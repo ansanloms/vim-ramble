@@ -1,6 +1,23 @@
 import dir from "./deps/dir/mod.ts";
+import { assert, is } from "./deps/@core/unknownutil/mod.ts";
 import * as path from "./deps/@std/path/mod.ts";
 import * as fs from "./deps/@std/fs/mod.ts";
+
+type ConfigOpenAI = {
+  "apiKey": string;
+};
+
+export type Config = {
+  "openai"?: ConfigOpenAI;
+};
+
+const isConfigOpenAI = is.ObjectOf({
+  apiKey: is.String,
+});
+
+const isConfig = is.ObjectOf({
+  openai: is.OptionalOf(isConfigOpenAI),
+});
 
 const getBaseConfigPath = () => {
   const configDirectory = dir("config");
@@ -23,7 +40,7 @@ const getConfigPath = () => {
   return path.join(baseConfigDir, "ramble/config.json");
 };
 
-const getConfig = () => {
+const getConfig = (): Config => {
   const configPath = getConfigPath();
 
   if (!(fs.existsSync(configPath))) {
@@ -34,9 +51,10 @@ const getConfig = () => {
     );
   }
 
-  return JSON.parse(Deno.readTextFileSync(configPath)) as {
-    openai: { apiKey: string };
-  }; // @todo
+  const config = JSON.parse(Deno.readTextFileSync(configPath));
+  assert(config, isConfig);
+
+  return config;
 };
 
 export { getConfig as config, getConfigPath as path };
