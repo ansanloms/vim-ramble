@@ -18,7 +18,7 @@ export const main: Entrypoint = (denops) => {
      * 新しいチャットバッファを作成する。
      */
     new: async (llm, meta?, messages?) => {
-      assert(llm, is.String);
+      assert(llm, chat.isChatContentLlm);
 
       if (!is.Undefined(meta)) {
         assert(meta, chat.isChatContentMeta);
@@ -26,9 +26,14 @@ export const main: Entrypoint = (denops) => {
 
       if (is.Undefined(messages)) {
         messages = [
-          { role: "system", message: "system message is here..." },
+          {
+            role: "system",
+            type: "text",
+            message: "system message is here...",
+          },
           {
             role: "user",
+            type: "text",
             message: "first question is here...",
           },
         ];
@@ -82,6 +87,7 @@ export const main: Entrypoint = (denops) => {
         await denops.call("appendbufline", bufnr, "$", [
           ...chat.messageToStringList({
             role: "assistant",
+            type: "text",
             message: currentChunk?.content.toString() || "",
           }),
           "",
@@ -101,6 +107,7 @@ export const main: Entrypoint = (denops) => {
       await denops.call("appendbufline", bufnr, "$", [
         ...chat.messageToStringList({
           role: "user",
+          type: "text",
           message: "",
         }),
       ]);
