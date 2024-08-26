@@ -46,6 +46,7 @@ export const main: Entrypoint = (denops) => {
       await denops.cmd("vsplit | wincmd l | vertical resize 80");
       await denops.cmd(`buffer ${bufnr}`);
       await denops.cmd("setlocal filetype=ramble-chat");
+      await denops.cmd("setlocal buflisted");
 
       await denops.call(
         "appendbufline",
