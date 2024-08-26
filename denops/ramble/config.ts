@@ -1,5 +1,5 @@
 import dir from "./deps/dir/mod.ts";
-import { assert, is } from "./deps/@core/unknownutil/mod.ts";
+import { as, assert, is } from "./deps/@core/unknownutil/mod.ts";
 import * as path from "./deps/@std/path/mod.ts";
 import * as fs from "./deps/@std/fs/mod.ts";
 
@@ -25,8 +25,8 @@ const isConfigGoogleGenerativeAI = is.ObjectOf({
 });
 
 const isConfig = is.ObjectOf({
-  OpenAI: is.OptionalOf(isConfigOpenAI),
-  GoogleGenerativeAI: is.OptionalOf(isConfigGoogleGenerativeAI),
+  OpenAI: as.Optional(isConfigOpenAI),
+  GoogleGenerativeAI: as.Optional(isConfigGoogleGenerativeAI),
 });
 
 const getBaseConfigPath = () => {
