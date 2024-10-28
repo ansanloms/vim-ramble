@@ -89,7 +89,7 @@ const parseLlm = (data: {
 }): ChatContent["llm"] | undefined => {
   const llm = String(data.llm || "");
 
-  return isChatContentLlm(llm) ? llm : undefined;
+  return isChatContentLlm(llm) ? llm as ChatContent["llm"] : undefined;
 };
 
 const parseMeta = (data: {
@@ -113,9 +113,9 @@ const parseMessages = (data: string): ChatContent["messages"] => {
       : [undefined, undefined];
 
     if (is.String(role)) {
-      assert(role, isChatMessageRole);
+      assert<ChatMessage["role"]>(role, isChatMessageRole);
       if (!is.Undefined(type)) {
-        assert(type, isChatMessageType);
+        assert<ChatMessage["type"]>(type, isChatMessageType);
       }
 
       messages.push({

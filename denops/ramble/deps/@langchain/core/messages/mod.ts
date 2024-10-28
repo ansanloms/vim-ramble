@@ -1,1 +1,1 @@
-export * from "npm:@langchain/core@0.2.9/messages";
+export * from "npm:@langchain/core@0.3.15/messages";

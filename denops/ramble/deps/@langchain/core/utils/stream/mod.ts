@@ -1,1 +1,1 @@
-export * from "npm:@langchain/core@0.2.9/utils/stream";
+export * from "npm:@langchain/core@0.3.15/utils/stream";

@@ -1,1 +1,1 @@
-export * from "npm:@langchain/openai@0.2.7";
+export * from "npm:@langchain/openai@0.3.11";

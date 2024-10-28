@@ -62,7 +62,7 @@ const getConfig = (): Config => {
   }
 
   const config = JSON.parse(Deno.readTextFileSync(configPath));
-  assert(config, isConfig);
+  assert<Config>(config, isConfig);
 
   return config;
 };
