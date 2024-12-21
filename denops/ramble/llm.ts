@@ -25,8 +25,8 @@ const getOpenAIModel = (
 ) => {
   return new ChatOpenAI({
     apiKey: config.OpenAI?.apiKey,
-    model: String(meta?.model || "gpt-4o"),
-    temperature: Number(meta?.temperature || 0),
+    model: String(meta?.model ?? "gpt-4o"),
+    temperature: meta?.temperature ? Number(meta?.temperature) : undefined,
     streaming: true,
   });
 };
@@ -37,8 +37,8 @@ const getGoogleGenerativeAIModel = (
 ) => {
   return new ChatGoogleGenerativeAI({
     apiKey: config.GoogleGenerativeAI?.apiKey,
-    model: String(meta?.model || "gemini-pro"),
-    maxOutputTokens: Number(meta?.maxOutputTokens || 2048),
+    model: String(meta?.model ?? "gemini-pro"),
+    maxOutputTokens: Number(meta?.maxOutputTokens ?? 2048),
     streaming: true,
   });
 };

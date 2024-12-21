@@ -1,1 +1,1 @@
-export * from "npm:@langchain/google-genai@0.1.2";
+export * from "npm:@langchain/google-genai@0.1.6";

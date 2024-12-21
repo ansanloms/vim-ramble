@@ -1,1 +1,1 @@
-export * from "jsr:@denops/std@7.3.0/helper";
+export * from "jsr:@denops/std@7.4.0/helper";
