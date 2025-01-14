@@ -1,6 +1,5 @@
-import { marked } from "./deps/marked/mod.ts";
 import matter from "./deps/gray-matter/mod.ts";
-import { assert, is } from "./deps/@core/unknownutil/mod.ts";
+import { is } from "./deps/@core/unknownutil/mod.ts";
 import {
   AIMessage,
   AIMessageChunk,
@@ -20,7 +19,7 @@ type ChatMessage = {
   /**
    * type.
    */
-  type: "text" | "image_url";
+  type: "text";
 
   /**
    * message.
@@ -42,8 +41,11 @@ export type ChatContent = {
   /**
    * meta.
    */
-  meta?: Record<string, string | number | boolean>;
+  meta: Record<string, string | number | boolean>;
 };
+
+const delimiter = "--------";
+const splitter = /--------\s*/;
 
 export const isChatContentLlm = is.UnionOf([
   is.LiteralOf("OpenAI"),
@@ -58,7 +60,6 @@ export const isChatMessageRole = is.UnionOf([
 
 export const isChatMessageType = is.UnionOf([
   is.LiteralOf("text"),
-  is.LiteralOf("image_url"),
 ]);
 
 const isChatContentMetaData = is.UnionOf([is.Number, is.String, is.Boolean]);
@@ -77,9 +78,9 @@ export const isChatMessage = is.ObjectOf({
 export const parse = (body: string): ChatContent => {
   const { data, content } = matter(body.trim());
 
-  const llm = parseLlm(data) || "OpenAI";
+  const llm = parseLlm(data) ?? "OpenAI";
   const messages = parseMessages(content);
-  const meta = parseMeta(data);
+  const meta = parseMeta(data) ?? {};
 
   return { llm, meta, messages };
 };
@@ -104,37 +105,29 @@ const parseMeta = (data: {
 };
 
 const parseMessages = (data: string): ChatContent["messages"] => {
-  const messages: ChatContent["messages"] = [];
+  return data.split(splitter).map((value) => value.trim().split("\n")).map<
+    ChatMessage | undefined
+  >((value, index, array) => {
+    const role = (index === 0 ? undefined : array.at(index - 1))?.at(-1)
+      ?.trim();
+    const type = "text";
+    const message = value.slice(0, value.length - (array.at(index + 1) ? 1 : 0))
+      .join("\n");
 
-  for (const token of marked.lexer(data.trim())) {
-    const [role, type] = token.type === "heading" &&
-        token.depth === 2
-      ? String(token.text).split(":", 2).map((v) => v.trim())
-      : [undefined, undefined];
-
-    if (is.String(role)) {
-      assert<ChatMessage["role"]>(role, isChatMessageRole);
-      if (!is.Undefined(type)) {
-        assert<ChatMessage["type"]>(type, isChatMessageType);
-      }
-
-      messages.push({
-        role,
-        type: type || "text",
-        message: "",
-      });
-    } else if (messages.length > 0) {
-      messages[messages.length - 1].message += token.raw;
+    if (isChatMessageRole(role)) {
+      return { role, type, message };
     }
-  }
 
-  return messages;
+    return undefined;
+  }).filter<ChatMessage>((value): value is ChatMessage =>
+    typeof value !== "undefined"
+  );
 };
 
 export const toStringList = (chatContent: ChatContent) => {
   const metaTexts = Object.entries({
     llm: chatContent.llm,
-    ...(chatContent.meta || {}),
+    ...(chatContent.meta ?? {}),
   }).map(([k, v]) => `${k}: ${v}`);
 
   const messagesTexts = chatContent.messages
@@ -146,8 +139,8 @@ export const toStringList = (chatContent: ChatContent) => {
 
 export const messageToStringList = (message: ChatMessage) => {
   return [
-    `${message.role}${message.type === "image_url" ? ":image_url" : ""}`,
-    "---",
+    `${message.role}`,
+    delimiter,
     "",
     ...message.message.trim().split("\n"),
   ];
@@ -190,10 +183,6 @@ export const chat = async (
           text: message.message,
         }],
       });
-    }
-
-    if (message.type === "image_url") {
-      // @todo
     }
 
     return new HumanMessage({
