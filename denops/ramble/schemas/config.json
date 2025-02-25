@@ -17,7 +17,7 @@
         }
       }
     },
-    "Google": {
+    "GoogleGenerativeAI": {
       "description": "Google.",
       "type": "object",
       "required": ["apiKey"],

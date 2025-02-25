@@ -36,7 +36,7 @@ const getGoogleGenerativeAIModel = (
   meta?: Record<string, string | number | boolean>,
 ) => {
   return new ChatGoogleGenerativeAI({
-    apiKey: config.GoogleGenerativeAI?.apiKey,
+    apiKey: config.Google?.apiKey,
     model: String(meta?.model ?? "gemini-pro"),
     maxOutputTokens: Number(meta?.maxOutputTokens ?? 2048),
     streaming: true,
