@@ -2,6 +2,7 @@ import type { Config } from "./config.ts";
 import type { ChatContent } from "./chat.ts";
 import { ChatOpenAI } from "./deps/@langchain/openai/mod.ts";
 import { ChatGoogleGenerativeAI } from "./deps/@langchain/google-genai/mod.ts";
+import { ChatAnthropic } from "./deps/@langchain/anthropic/mod.ts";
 
 export const getModel = (
   llm: ChatContent["llm"],
@@ -16,7 +17,11 @@ export const getModel = (
     return getGoogleGenerativeAIModel(config, meta);
   }
 
-  return undefined;
+  if (llm === "Anthropic") {
+    return getAnthropicModel(config, meta);
+  }
+
+  throw new Error("Invalid model.");
 };
 
 const getOpenAIModel = (
@@ -39,6 +44,17 @@ const getGoogleGenerativeAIModel = (
     apiKey: config.Google?.apiKey,
     model: String(meta?.model ?? "gemini-pro"),
     maxOutputTokens: Number(meta?.maxOutputTokens ?? 2048),
+    streaming: true,
+  });
+};
+
+const getAnthropicModel = (
+  config: Config,
+  meta?: Record<string, string | number | boolean>,
+) => {
+  return new ChatAnthropic({
+    apiKey: config.Anthropic?.apiKey,
+    model: String(meta?.model ?? "claude-3-7-sonnet-20250219"),
     streaming: true,
   });
 };

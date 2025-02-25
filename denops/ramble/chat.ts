@@ -50,6 +50,7 @@ const splitter = /--------\s*/;
 export const isChatContentLlm = is.UnionOf([
   is.LiteralOf("OpenAI"),
   is.LiteralOf("GoogleGenerativeAI"),
+  is.LiteralOf("Anthropic"),
 ]);
 
 export const isChatMessageRole = is.UnionOf([

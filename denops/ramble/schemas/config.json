@@ -17,8 +17,19 @@
         }
       }
     },
-    "GoogleGenerativeAI": {
+    "Google": {
       "description": "Google.",
+      "type": "object",
+      "required": ["apiKey"],
+      "properties": {
+        "apiKey": {
+          "description": "API key.",
+          "type": "string"
+        }
+      }
+    },
+    "Anthropic": {
+      "description": "Anthropic.",
       "type": "object",
       "required": ["apiKey"],
       "properties": {
