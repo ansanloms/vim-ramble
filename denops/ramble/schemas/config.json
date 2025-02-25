@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/ansanloms/vim-ramble/refs/heads/main/denops/ramble/schemas/config.json",
+  "title": "ramble.vim Config",
+  "description": "ramble.vim config schema.",
+  "type": "object",
+  "required": [],
+  "properties": {
+    "OpenAI": {
+      "description": "OpenAI.",
+      "type": "object",
+      "required": ["apiKey"],
+      "properties": {
+        "apiKey": {
+          "description": "API key.",
+          "type": "string"
+        }
+      }
+    },
+    "Google": {
+      "description": "Google.",
+      "type": "object",
+      "required": ["apiKey"],
+      "properties": {
+        "apiKey": {
+          "description": "API key.",
+          "type": "string"
+        }
+      }
+    }
+  }
+}

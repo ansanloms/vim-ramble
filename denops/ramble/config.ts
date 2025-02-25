@@ -1,33 +1,34 @@
 import dir from "./deps/dir/mod.ts";
-import { as, assert, is } from "./deps/@core/unknownutil/mod.ts";
 import * as path from "./deps/@std/path/mod.ts";
 import * as fs from "./deps/@std/fs/mod.ts";
+import { FromSchema } from "./deps/json-schema-to-ts/mod.ts";
+import { betterAjvErrors } from "./deps/@apideck/better-ajv-errors/mod.ts";
+import Ajv from "./deps/ajv/mod.ts";
 
-type ConfigOpenAI = {
-  apiKey: string;
-};
+import schema from "./schemas/config.json" with { type: "json" };
 
-type ConfigGoogleGenerativeAI = {
-  apiKey: string;
-};
+export type Config = FromSchema<typeof schema>;
 
-export type Config = {
-  OpenAI?: ConfigOpenAI;
-  GoogleGenerativeAI?: ConfigGoogleGenerativeAI;
-};
+const ajv = new Ajv();
 
-const isConfigOpenAI = is.ObjectOf({
-  apiKey: is.String,
-});
+function assertConfig(x: unknown): asserts x is Config {
+  const _schema = Object.assign({}, schema);
+  delete _schema["$schema"];
+  delete _schema["$id"];
 
-const isConfigGoogleGenerativeAI = is.ObjectOf({
-  apiKey: is.String,
-});
-
-const isConfig = is.ObjectOf({
-  OpenAI: as.Optional(isConfigOpenAI),
-  GoogleGenerativeAI: as.Optional(isConfigGoogleGenerativeAI),
-});
+  const validate = ajv.compile(_schema);
+  const valid = validate(x);
+  if (!valid) {
+    const betterErrors = betterAjvErrors({
+      schema: _schema,
+      data: x,
+      errors: validate.errors,
+    });
+    throw new Error(
+      "Invalid format: " + JSON.stringify(betterErrors, null, 2),
+    );
+  }
+}
 
 const getBaseConfigPath = () => {
   const configDirectory = dir("config");
@@ -62,7 +63,7 @@ const getConfig = (): Config => {
   }
 
   const config = JSON.parse(Deno.readTextFileSync(configPath));
-  assert<Config>(config, isConfig);
+  assertConfig(config);
 
   return config;
 };
