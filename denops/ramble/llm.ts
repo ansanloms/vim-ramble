@@ -4,6 +4,8 @@ import { ChatOpenAI } from "./deps/@langchain/openai/mod.ts";
 import { ChatGoogleGenerativeAI } from "./deps/@langchain/google-genai/mod.ts";
 import { ChatAnthropic } from "./deps/@langchain/anthropic/mod.ts";
 
+type Meta = Record<string, string | number | boolean>;
+
 export const getModel = (
   llm: ChatContent["llm"],
   config: Config,
@@ -24,10 +26,7 @@ export const getModel = (
   throw new Error("Invalid model.");
 };
 
-const getOpenAIModel = (
-  config: Config,
-  meta?: Record<string, string | number | boolean>,
-) => {
+const getOpenAIModel = (config: Config, meta?: Meta) => {
   return new ChatOpenAI({
     apiKey: config.OpenAI?.apiKey,
     model: String(meta?.model ?? "gpt-4o"),
@@ -36,10 +35,7 @@ const getOpenAIModel = (
   });
 };
 
-const getGoogleGenerativeAIModel = (
-  config: Config,
-  meta?: Record<string, string | number | boolean>,
-) => {
+const getGoogleGenerativeAIModel = (config: Config, meta?: Meta) => {
   return new ChatGoogleGenerativeAI({
     apiKey: config.Google?.apiKey,
     model: String(meta?.model ?? "gemini-pro"),
@@ -48,10 +44,7 @@ const getGoogleGenerativeAIModel = (
   });
 };
 
-const getAnthropicModel = (
-  config: Config,
-  meta?: Record<string, string | number | boolean>,
-) => {
+const getAnthropicModel = (config: Config, meta?: Meta) => {
   return new ChatAnthropic({
     apiKey: config.Anthropic?.apiKey,
     model: String(meta?.model ?? "claude-3-7-sonnet-20250219"),
